@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}
+  {{ object_verbose_name_plural|title }}
+{% endblock %}
+{% block content %}
+  <section class="section">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">{{ object_verbose_name_plural|title }}</h5>
+      </div>
+
+      <div class="card-body">
+        <div>
+          <a href="{{ create_view_url }}" class="btn btn-primary">
+            Crear {{ object_verbose_name }}
+          </a>
+        </div>
+        <table class="table table-striped" id="table1">
+          <thead>
+            <tr>
+              {% for header in headers %}
+                <th>{{ header|capfirst }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for object in object_list.values_list %}
+              <tr>
+                {% for field in object %}
+                  {% if field is False or field is True %}
+                    <td>{{ field|yesno:'Si,No' }}</td>
+                  {% elif field is None or field == '' %}
+                    <td>No tiene</td>
+                  {% else %}
+                    <td>{{ field }}</td>
+                  {% endif %}
+                {% endfor %}
+                <td>{{ object.actions }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block scripts %}
+  <!-- prettier-ignore -->
+  <script src="{% static 'extensions/simple-datatables/umd/simple-datatables.js'%}"></script>
+  <script src="{% static 'js/pages/simple-datatables.js' %}"></script>
+{% endblock %}
