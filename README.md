@@ -60,7 +60,7 @@ python manage.py runserver
 
 ## Notas
 
-Se uso la carpeta fronted unicamente para renderizar html, por comodidad para poder usar base.html como plantilla.
+Se uso la carpeta fronted unicamente para renderizar html, por comodidad para poder usar base.html como plantilla. La base de datos sqlite se subió con las migraciones hecha, para facilitar el uso de la aplicación.
 
 ## Autor
 
