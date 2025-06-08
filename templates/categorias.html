@@ -4,7 +4,7 @@
   <section class="section">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title">Clientes</h5>
+        <h5 class="card-title">Categorías</h5>
       </div>
 
       <div class="card-body">
@@ -14,7 +14,7 @@
             data-bs-toggle="modal"
             data-bs-target="#modal"
             onclick="handleModal(true)">
-            Crear Cliente
+            Crear categoria
           </a>
         </div>
         <table class="table table-striped" id="table">
@@ -22,9 +22,6 @@
             <tr>
               <th>Id</th>
               <th>Nombre</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Dirección</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -45,45 +42,18 @@
       class="form-control form-control-lg" />
     <span id="nombre-helper" class="input-helper"></span>
   </div>
-  <div class="form-outline mb-3">
-    <label class="form-label" for="email">Email</label>
-    <input type="email"
-      id="correo"
-      name="correo"
-      class="form-control form-control-lg" />
-    <span id="correo-helper" class="input-helper"></span>
-  </div>
-  <div class="form-outline mb-3">
-    <label class="form-label" for="telefono">Teléfono</label>
-    <input type="tel"
-      id="telefono"
-      name="telefono"
-      class="form-control form-control-lg" />
-    <span id="telefono-helper" class="input-helper"></span>
-  </div>
-  <div class="form-outline mb-3">
-    <label class="form-label" for="direccion">Dirección</label>
-    <input type="text"
-      id="direccion"
-      name="direccion"
-      class="form-control form-control-lg" />
-    <span id="direccion-helper" class="input-helper"></span>
-  </div>
 {% endblock %}
 
 {% block scripts %}
   <script>
     async function loadData() {
-      const data = await fetchData("clientes/");
+      const data = await fetchData("productos/categorias/");
       const tbody = document.querySelector("tbody");
       tbody.innerHTML = "";
       for (const object of data) {
         const row = document.createElement("tr");
         insertData(row, object.id);
         insertData(row, object.nombre);
-        insertData(row, object.correo);
-        insertData(row, object.telefono);
-        insertData(row, object.direccion);
         row.appendChild(actionButtons(object.id));
         tbody.appendChild(row);
       }
@@ -127,15 +97,12 @@
       document.getElementById("id").value = id;
       const tituloElement = document.querySelector(".modal-title");
       if (isNew) {
-        tituloElement.innerHTML = "Crear cliente";
+        tituloElement.innerHTML = "Crear categoria";
       } else {
-        tituloElement.innerHTML = "Editar cliente";
-        const data = await fetchData(`clientes/${id}/`);
+        tituloElement.innerHTML = "Editar categoria";
+        const data = await fetchData(`productos/categorias/${id}/`);
         document.querySelector("#id").value = data.id;
         document.querySelector("#nombre").value = data.nombre;
-        document.querySelector("#correo").value = data.correo;
-        document.querySelector("#telefono").value = data.telefono;
-        document.querySelector("#direccion").value = data.direccion;
       }
     }
 
@@ -147,14 +114,18 @@
       let response;
       console.log(json);
       if (json.id) {
-        response = await fetchData(`clientes/${json.id}/`, "PUT", json);
+        response = await fetchData(
+          `productos/categorias/${json.id}/`,
+          "PUT",
+          json
+        );
       } else {
-        response = await fetchData("clientes/", "POST", json);
+        response = await fetchData("productos/categorias/", "POST", json);
       }
 
       if (response.id) {
         document.querySelector(".msg").innerHTML =
-          "Cliente guardado correctamente";
+          "Categoría guardado correctamente";
         closeModal();
         loadData();
         setTimeout(() => {
@@ -166,11 +137,11 @@
 
     /** @param {string} id */
     async function deleteData(id) {
-      if (confirm("¿Está seguro de eliminar este cliente?")) {
-        const data = await fetchData(`clientes/${id}/`, "DELETE");
+      if (confirm("¿Está seguro de eliminar este categoría?")) {
+        const data = await fetchData(`productos/categorias/${id}/`, "DELETE");
         if (data.ok) {
           document.querySelector(".msg").innerHTML =
-            "Cliente eliminado correctamente";
+            "Categoría eliminado correctamente";
           setTimeout(() => {
             resetMessages();
           }, 3000);

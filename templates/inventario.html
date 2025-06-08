@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block head %}
+  <link rel="stylesheet" href="{% static 'libs/BVSelect/bvselect.css' %}" />
+{% endblock %}
 {% block content %}
   <section class="section">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title">Clientes</h5>
+        <h5 class="card-title">Inventario</h5>
       </div>
 
       <div class="card-body">
@@ -14,17 +17,17 @@
             data-bs-toggle="modal"
             data-bs-target="#modal"
             onclick="handleModal(true)">
-            Crear Cliente
+            Crear Inventario
           </a>
         </div>
         <table class="table table-striped" id="table">
           <thead>
             <tr>
               <th>Id</th>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Dirección</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Observaciones</th>
+              <th>Fecha Ingreso</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -37,56 +40,90 @@
 
 {% block modal %}
   <input type="hidden" name="id" id="id" />
-  <div class="form-outline mb-4">
-    <label class="form-label" for="nombre">Nombre</label>
-    <input type="text"
-      id="nombre"
-      name="nombre"
-      class="form-control form-control-lg" />
-    <span id="nombre-helper" class="input-helper"></span>
+  <div class="form-outline mb-3">
+    <label class="form-label" for="producto">Producto</label>
+    <select id="producto"
+      name="producto"
+      class="form-select form-select-lg"></select>
+    <span id="producto-helper" class="input-helper"></span>
   </div>
   <div class="form-outline mb-3">
-    <label class="form-label" for="email">Email</label>
-    <input type="email"
-      id="correo"
-      name="correo"
+    <label class="form-label" for="cantidad">Cantidad</label>
+    <input type="number"
+      id="cantidad"
+      name="cantidad"
       class="form-control form-control-lg" />
-    <span id="correo-helper" class="input-helper"></span>
+    <span id="cantidad-helper" class="input-helper"></span>
   </div>
   <div class="form-outline mb-3">
-    <label class="form-label" for="telefono">Teléfono</label>
-    <input type="tel"
-      id="telefono"
-      name="telefono"
-      class="form-control form-control-lg" />
-    <span id="telefono-helper" class="input-helper"></span>
+    <label class="form-label" for="observaciones">
+      Observaciones (Opcional)
+    </label>
+    <textarea id="observaciones"
+      name="observaciones"
+      class="form-control form-control-lg"
+      rows="3"></textarea>
+    <span id="observaciones-helper" class="input-helper"></span>
   </div>
   <div class="form-outline mb-3">
-    <label class="form-label" for="direccion">Dirección</label>
-    <input type="text"
-      id="direccion"
-      name="direccion"
+    <label class="form-label" for="fecha_ingreso">Fecha Ingreso</label>
+    <input type="date"
+      id="fecha_ingreso"
+      name="fecha_ingreso"
       class="form-control form-control-lg" />
-    <span id="direccion-helper" class="input-helper"></span>
+    <span id="fecha_ingreso-helper" class="input-helper"></span>
   </div>
 {% endblock %}
 
 {% block scripts %}
+  <script src="{% static 'libs/BVSelect/bvselect.js' %}"></script>
   <script>
+    let productos = {};
+    const productosSelect = new BVSelect({
+      selector: "#producto",
+      width: "100%",
+      searchbox: true,
+      offset: true,
+      placeholder: "Selecciona un producto",
+      search_placeholder: "Buscar...",
+      search_autofocus: true,
+      breakpoint: 450,
+    });
+
     async function loadData() {
-      const data = await fetchData("clientes/");
+      const data = await fetchData("inventario/");
       const tbody = document.querySelector("tbody");
       tbody.innerHTML = "";
       for (const object of data) {
         const row = document.createElement("tr");
         insertData(row, object.id);
-        insertData(row, object.nombre);
-        insertData(row, object.correo);
-        insertData(row, object.telefono);
-        insertData(row, object.direccion);
+        insertData(row, productos[object.producto]);
+        insertData(row, object.cantidad);
+        insertData(row, object.observaciones);
+        insertData(row, object.fecha_ingreso);
         row.appendChild(actionButtons(object.id));
         tbody.appendChild(row);
       }
+    }
+
+    async function loadProductos() {
+      const data = await fetchData("productos/");
+      const select = document.querySelector("#producto");
+      select.innerHTML = "";
+      if (data.length == 0) {
+        const option = document.createElement("option");
+        option.value = 0;
+        option.innerHTML = "No hay productos";
+        select.appendChild(option);
+      }
+      for (const object of data) {
+        const option = document.createElement("option");
+        option.value = object.id;
+        option.innerHTML = `${object.nombre} - ${object.precio}$`;
+        select.appendChild(option);
+        productos[object.id] = object.nombre;
+      }
+      productosSelect.Update();
     }
 
     function actionButtons(id) {
@@ -127,15 +164,19 @@
       document.getElementById("id").value = id;
       const tituloElement = document.querySelector(".modal-title");
       if (isNew) {
-        tituloElement.innerHTML = "Crear cliente";
+        tituloElement.innerHTML = "Crear inventario";
       } else {
-        tituloElement.innerHTML = "Editar cliente";
-        const data = await fetchData(`clientes/${id}/`);
+        tituloElement.innerHTML = "Editar inventario";
+        const data = await fetchData(`inventario/${id}/`);
         document.querySelector("#id").value = data.id;
-        document.querySelector("#nombre").value = data.nombre;
-        document.querySelector("#correo").value = data.correo;
-        document.querySelector("#telefono").value = data.telefono;
-        document.querySelector("#direccion").value = data.direccion;
+        document.querySelector("#producto").value = data.producto;
+        document.querySelector("#cantidad").value = data.cantidad;
+        document.querySelector("#observaciones").value = data.observaciones;
+        document.querySelector("#fecha_ingreso").value = data.fecha_ingreso;
+        productosSelect.SetOption({
+          type: "byValue",
+          value: data.producto,
+        });
       }
     }
 
@@ -147,14 +188,14 @@
       let response;
       console.log(json);
       if (json.id) {
-        response = await fetchData(`clientes/${json.id}/`, "PUT", json);
+        response = await fetchData(`inventario/${json.id}/`, "PUT", json);
       } else {
-        response = await fetchData("clientes/", "POST", json);
+        response = await fetchData("inventario/", "POST", json);
       }
 
       if (response.id) {
         document.querySelector(".msg").innerHTML =
-          "Cliente guardado correctamente";
+          "Inventario guardado correctamente";
         closeModal();
         loadData();
         setTimeout(() => {
@@ -166,11 +207,11 @@
 
     /** @param {string} id */
     async function deleteData(id) {
-      if (confirm("¿Está seguro de eliminar este cliente?")) {
-        const data = await fetchData(`clientes/${id}/`, "DELETE");
+      if (confirm("¿Está seguro de eliminar este Inventario?")) {
+        const data = await fetchData(`inventario/${id}/`, "DELETE");
         if (data.ok) {
           document.querySelector(".msg").innerHTML =
-            "Cliente eliminado correctamente";
+            "Inventario eliminado correctamente";
           setTimeout(() => {
             resetMessages();
           }, 3000);
@@ -179,6 +220,7 @@
       }
     }
     document.addEventListener("DOMContentLoaded", async function () {
+      await loadProductos();
       await loadData();
     });
   </script>

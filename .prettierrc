@@ -1,0 +1,13 @@
+{
+    "overrides": [
+      {
+        "files": ["*.html"],
+        "options": {
+          "parser": "melody"
+        }
+      }
+    ],
+    "plugins": [
+        "/home/juan/.bun/install/global/node_modules/prettier-plugin-django"
+    ]
+  }

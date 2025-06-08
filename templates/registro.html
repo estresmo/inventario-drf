@@ -30,6 +30,9 @@
           height: 100%;
         }
       }
+      .input-helper {
+        display: block;
+      }
     </style>
   </head>
   <body>
@@ -52,6 +55,7 @@
                 <label class="form-label" for="username">
                   Nombre de usuario
                 </label>
+                <span id="username-helper" class="input-helper"></span>
               </div>
 
               <div class="form-outline mb-3">
@@ -60,18 +64,29 @@
                   name="password"
                   class="form-control form-control-lg" />
                 <label class="form-label" for="password">Contraseña</label>
+                <span id="password-helper" class="input-helper"></span>
+              </div>
+
+              <div class="form-outline mb-3">
+                <input type="password"
+                  id="password2"
+                  name="password2"
+                  class="form-control form-control-lg" />
+                <label class="form-label" for="password2">
+                  Repetir contraseña
+                </label>
               </div>
 
               <div class="text-center text-lg-start mt-4 pt-2">
                 <button type="submit"
                   class="btn btn-primary btn-lg"
                   style="padding-left: 2.5rem; padding-right: 2.5rem">
-                  Iniciar sesión
+                  Registrar
                 </button>
               </div>
               <div class="mt-2 text-end">
-                <a href="{% url 'registro' %}" class="">
-                  ¿No tienes cuenta? Registrarse
+                <a href="{% url 'login' %}" class="">
+                  ¿Ya tienes cuenta? Iniciar sesión
                 </a>
               </div>
             </form>
@@ -79,6 +94,7 @@
         </div>
       </div>
     </section>
+
     <!-- prettier-ignore -->
     <script src="{% static 'libs/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
     <script>
@@ -86,10 +102,16 @@
         .querySelector("form")
         .addEventListener("submit", async function (e) {
           e.preventDefault();
+          resetMessages();
           const form = e.target;
           const data = new FormData(form);
+          if (data.get("password") !== data.get("password2")) {
+            document.getElementById("msg").innerHTML =
+              "Las contraseñas no coinciden";
+            return;
+          }
           const json = Object.fromEntries(data.entries());
-          const response = await fetch("/api/v1/token/", {
+          const response = await fetch("/api/v1/usuarios/registro/", {
             method: "POST",
             body: JSON.stringify(json),
             headers: {
@@ -100,12 +122,27 @@
           if (response.ok) {
             localStorage.setItem("token", result.access);
             localStorage.setItem("refresh", result.refresh);
-            localStorage.setItem("username", data.get("username"));
-            window.location.href = "/";
+            document.getElementById("msg").innerHTML =
+              "Usuario creado correctamente. Reedireccionando...";
+            setTimeout(() => {
+              window.location.href = "/login/";
+            }, 3000);
+          } else if (response.status === 400) {
+            for (const [key, value] of Object.entries(result)) {
+              document.getElementById(key + "-helper").innerHTML = value;
+            }
           } else {
-            document.getElementById("msg").innerHTML = result.detail;
+            document.getElementById("msg").innerHTML =
+              "Ha ocurrido un error desconocido";
           }
         });
+
+      function resetMessages() {
+        document.getElementById("msg").innerHTML = "";
+        for (const element of document.querySelectorAll(".input-helper")) {
+          element.innerHTML = "";
+        }
+      }
     </script>
   </body>
 </html>

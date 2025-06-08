@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
+{% block head %}
+  <link rel="stylesheet" href="{% static 'libs/BVSelect/bvselect.css' %}" />
+{% endblock %}
 {% block content %}
   <section class="section">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title">Clientes</h5>
+        <h5 class="card-title">Productos</h5>
       </div>
 
       <div class="card-body">
@@ -14,7 +17,7 @@
             data-bs-toggle="modal"
             data-bs-target="#modal"
             onclick="handleModal(true)">
-            Crear Cliente
+            Crear Producto
           </a>
         </div>
         <table class="table table-striped" id="table">
@@ -22,9 +25,8 @@
             <tr>
               <th>Id</th>
               <th>Nombre</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Dirección</th>
+              <th>Descripción</th>
+              <th>Precio</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -45,48 +47,80 @@
       class="form-control form-control-lg" />
     <span id="nombre-helper" class="input-helper"></span>
   </div>
-  <div class="form-outline mb-3">
-    <label class="form-label" for="email">Email</label>
-    <input type="email"
-      id="correo"
-      name="correo"
+  <div class="form-outline mb-4">
+    <label class="form-label" for="descripcion">Descripción</label>
+    <textarea id="descripcion"
+      name="descripcion"
+      class="form-control form-control-lg"
+      rows="3"></textarea>
+    <span id="descripcion-helper" class="input-helper"></span>
+  </div>
+  <div class="form-outline mb-4">
+    <label class="form-label" for="precio">Precio</label>
+    <input type="number"
+      id="precio"
+      name="precio"
       class="form-control form-control-lg" />
-    <span id="correo-helper" class="input-helper"></span>
+    <span id="precio-helper" class="input-helper"></span>
   </div>
   <div class="form-outline mb-3">
-    <label class="form-label" for="telefono">Teléfono</label>
-    <input type="tel"
-      id="telefono"
-      name="telefono"
-      class="form-control form-control-lg" />
-    <span id="telefono-helper" class="input-helper"></span>
-  </div>
-  <div class="form-outline mb-3">
-    <label class="form-label" for="direccion">Dirección</label>
-    <input type="text"
-      id="direccion"
-      name="direccion"
-      class="form-control form-control-lg" />
-    <span id="direccion-helper" class="input-helper"></span>
+    <label class="form-label" for="categoria">Categoria</label>
+    <select id="categoria"
+      name="categoria"
+      class="form-select form-select-lg"></select>
+    <span id="categoria-helper" class="input-helper"></span>
   </div>
 {% endblock %}
 
 {% block scripts %}
+  <script src="{% static 'libs/BVSelect/bvselect.js' %}"></script>
   <script>
+    let categorias = {};
+    const categoriasSelect = new BVSelect({
+      selector: "#categoria",
+      width: "100%",
+      searchbox: true,
+      offset: true,
+      placeholder: "Selecciona una categoria",
+      search_placeholder: "Buscar...",
+      search_autofocus: true,
+      breakpoint: 450,
+    });
+
     async function loadData() {
-      const data = await fetchData("clientes/");
+      const data = await fetchData("productos/");
       const tbody = document.querySelector("tbody");
       tbody.innerHTML = "";
       for (const object of data) {
         const row = document.createElement("tr");
         insertData(row, object.id);
         insertData(row, object.nombre);
-        insertData(row, object.correo);
-        insertData(row, object.telefono);
-        insertData(row, object.direccion);
+        insertData(row, object.descripcion);
+        insertData(row, object.precio);
+        insertData(row, categorias[object.categoria]);
         row.appendChild(actionButtons(object.id));
         tbody.appendChild(row);
       }
+    }
+
+    async function loadCategorias() {
+      const data = await fetchData("productos/categorias/");
+      const select = document.querySelector("#categoria");
+      select.innerHTML = "";
+      if (data.length == 0) {
+        const option = document.createElement("option");
+        option.value = 0;
+        option.innerHTML = "No hay categorias";
+        select.appendChild(option);
+      }
+      for (const object of data) {
+        const option = document.createElement("option");
+        option.value = object.id;
+        option.innerHTML = object.nombre;
+        select.appendChild(option);
+        categorias[object.id] = object.nombre;
+      }
+      categoriasSelect.Update();
     }
 
     function actionButtons(id) {
@@ -127,15 +161,19 @@
       document.getElementById("id").value = id;
       const tituloElement = document.querySelector(".modal-title");
       if (isNew) {
-        tituloElement.innerHTML = "Crear cliente";
+        tituloElement.innerHTML = "Crear producto";
       } else {
-        tituloElement.innerHTML = "Editar cliente";
-        const data = await fetchData(`clientes/${id}/`);
+        tituloElement.innerHTML = "Editar producto";
+        const data = await fetchData(`productos/${id}/`);
         document.querySelector("#id").value = data.id;
         document.querySelector("#nombre").value = data.nombre;
-        document.querySelector("#correo").value = data.correo;
-        document.querySelector("#telefono").value = data.telefono;
-        document.querySelector("#direccion").value = data.direccion;
+        document.querySelector("#descripcion").value = data.descripcion;
+        document.querySelector("#precio").value = data.precio;
+        document.querySelector("#categoria").value = data.categoria;
+        categoriasSelect.SetOption({
+          type: "byValue",
+          value: data.categoria,
+        });
       }
     }
 
@@ -147,14 +185,14 @@
       let response;
       console.log(json);
       if (json.id) {
-        response = await fetchData(`clientes/${json.id}/`, "PUT", json);
+        response = await fetchData(`productos/${json.id}/`, "PUT", json);
       } else {
-        response = await fetchData("clientes/", "POST", json);
+        response = await fetchData("productos/", "POST", json);
       }
 
       if (response.id) {
         document.querySelector(".msg").innerHTML =
-          "Cliente guardado correctamente";
+          "Producto guardado correctamente";
         closeModal();
         loadData();
         setTimeout(() => {
@@ -166,11 +204,11 @@
 
     /** @param {string} id */
     async function deleteData(id) {
-      if (confirm("¿Está seguro de eliminar este cliente?")) {
-        const data = await fetchData(`clientes/${id}/`, "DELETE");
+      if (confirm("¿Está seguro de eliminar este Producto?")) {
+        const data = await fetchData(`productos/${id}/`, "DELETE");
         if (data.ok) {
           document.querySelector(".msg").innerHTML =
-            "Cliente eliminado correctamente";
+            "Producto eliminado correctamente";
           setTimeout(() => {
             resetMessages();
           }, 3000);
@@ -179,6 +217,7 @@
       }
     }
     document.addEventListener("DOMContentLoaded", async function () {
+      await loadCategorias();
       await loadData();
     });
   </script>

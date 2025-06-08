@@ -24,3 +24,7 @@ def inventario(request):
 
 def inicio(request):
     return render(request, "inicio.html")
+
+
+def categorias(request):
+    return render(request, "categorias.html")
